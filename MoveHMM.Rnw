@@ -1,0 +1,197 @@
+\documentclass{article}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{amsmath}
+\usepackage{amsfonts}
+\usepackage{amssymb}
+\usepackage{graphicx}
+\usepackage{fullpage}
+\usepackage{hyperref}
+
+
+\title{hidden Markov models for animal movement data\\
+\small{}}
+\date{}
+
+
+\begin{document}
+
+\maketitle
+
+
+Let's have some fun with \texttt{moveHMM}! These exercises provide an introduction to the R package moveHMM for the modeling of animal movement data. Use the following commands to install and load the package: 
+
+<<echo=T, eval=F>>=
+
+install.packages("moveHMM")
+library(moveHMM)
+##momentuHMM 
+
+@
+
+
+Information about the package is available in its \href{http://tinyurl.com/gs3my43}{vignette} and in the Methods in Ecology and Evolution paper, \href{http://onlinelibrary.wiley.com/doi/10.1111/2041-210X.12578/epdf}{moveHMM: an R package for the statistical modelling of animal movement data using hidden Markov models}. Technical details regarding the specific functions are available in the documentation of the package (e.g.\ with \texttt{?prepData}). 
+
+\begin{enumerate}
+\item Load and prepare the data: 
+\begin{enumerate}
+\item Load the data with the command: 
+<<eval=F>>=
+trackData <- read.csv("http://tinyurl.com/hjk73fs")
+@
+\item Call the function \texttt{prepData} to compute the step lengths and turning angles from the locations in \texttt{trackData}. Store the results in a new data frame, \texttt{data}. 
+<<eval=F>>=
+data <- prepData(trackData = trackData,type="UTM")
+summary(data)
+@
+\item Visualize the data by calling the functions \texttt{plot} and \texttt{summary} on the object \texttt{data}. 
+<<eval=F>>=
+plot(data)
+@
+\end{enumerate}
+\item Fit a model to the data. 
+\begin{enumerate}
+\item Using the function \texttt{fitHMM} on data, fit a 2-state hidden Markov model to the data, and store the returned model into a new object \texttt{m}. Only four arguments are needed: 
+\begin{itemize}
+\item \texttt{data} - data set stored as a data frame object
+\item \texttt{nbStates} - Number of states
+\item \texttt{stepPar0} - initial values for the step length distributions
+\item \texttt{anglePar0} - initial values for the turning angle distributions 
+\end{itemize}
+You should try several sets of initial values for the parameters, and compare resulting parameter estimates and maximum likelihood values. 
+\begin{enumerate}
+\item First, let's see what we get when we use different sets of intial values. 
+<<eval=F, tidy=T>>=
+for(i in 1:20) {
+  # choose initial parameters randomly
+  stepMean0 <- rgamma(2,c(1,5),c(1,1))
+  stepSD0 <- rgamma(2,c(1,5),c(1,1))
+  stepPar0 <- c(stepMean0,stepSD0)
+  angleMean0 <- sample(c(pi,0),size=2)
+  angleCon0 <- rgamma(2,c(2,1),c(1,1))
+  anglePar0 <- c(angleMean0,angleCon0)
+  
+  # fit a 2-state model with randomly chosen initial parameters
+  m2 <- fitHMM(data, nbState=2, stepPar0=stepPar0, anglePar0=anglePar0)
+  
+  # print the negative maximum log-likelihood
+  print(m2$mod$minimum)
+}
+
+@
+\item These are one set of values that will lead us to the maximum likelihood estimates: 
+<<eval=F>>=
+stepMean0 <- c(.3,.7)
+stepSD0 <- c(1,5)
+stepPar0 <- c(stepMean0,stepSD0)
+angleMean0 <- c(pi,0)
+angleCon0 <- c(1,1)
+anglePar0 <- c(angleMean0, angleCon0)
+
+# fit a 2-state model
+m2 <- fitHMM(data, nbState=2, stepPar0=stepPar0, anglePar0=anglePar0)
+@
+\end{enumerate}
+\item Visualize the fitted model with \texttt{plot(m)}.
+<<eval=F>>=
+print(m2)
+plot(m2)
+@
+You can use the command \texttt{?plot.moveHMM} for help with additional plotting options. 
+\item Construct confidence intervals of the parameter estimates by calling the function \texttt{CI}, default is 95\% CIs. 
+<<eval=F>>=
+# confidence intervals for the MLE
+conf <- CI(m2)
+@
+\end{enumerate}
+\item Model Selection
+\begin{enumerate}
+\item We'll first fit a 3-state HMM and subsequently compare the results to the the fitted 2-state HMM. 
+<<eval=F>>=
+# initial parameters for the 3-state model 
+# (we should try different sets chosen randomly - these values lead to the MLE)
+stepMean0 <- c(0.3287348,2.0768461,6.6202912)
+stepSD0 <- c(2.5137013,2.3373504,10.1870794)
+stepPar0 <- c(stepMean0,stepSD0)
+angleMean0 <- c(pi,0,0)
+angleCon0 <- c(3.4257302,0.8145348,0.5360409)
+anglePar0 <- c(angleMean0,angleCon0)
+
+# fit a 3-state model
+m3 <- fitHMM(data, nbState=3, stepPar0=stepPar0, anglePar0=anglePar0)
+@
+\item Use the function AIC to compare the two fitted models. You can also use the AIC to compare models with different distributions for the step lengths and turning angles.  
+<<eval=F>>=
+# compare the AICs of the 2-state and 3-state models
+print(AIC(m2,m3))
+@
+\textit{In practice, don't blindly trust this criteria, but use it as guidance!}
+\end{enumerate}
+\item Assess the fitted model with pseudo-residuals. 
+\begin{enumerate}
+\item Compute the pseudo-residuals of a model you fitted, with \texttt{pseudoRes}, and store them in a new object \texttt{pr}. 
+<<eval=F>>=
+# compute pseudo-residuals
+pr <- pseudoRes(m2)
+@
+\item Visualize the pseudo-residuals using the function \texttt{plotPR} on the fitted model. How well does the model fit the data?
+<<eval=F>>=
+# plot pseudo-residuals
+plotPR(m2)
+@
+\end{enumerate}
+\item State decoding. 
+\begin{enumerate}
+\item Compute the most probable state sequence, by running the function \texttt{viterbi} on a fitted model.
+<<eval=F>>=
+# decode most probable state sequence using Viterbi algorithm
+states <- viterbi(m2)
+@
+\item Compute the state probabilities with \texttt{stateProbs}. 
+<<eval=F>>=
+# state probabilities
+sp <- stateProbs(m2)
+@
+\item Use the function \texttt{plotStates} to plot the decoded state sequence and the state probabilities. 
+<<eval=F>>=
+# plot most probable state sequence and state probabilites
+plotStates(m2)
+@
+\end{enumerate}
+\item Include covariates in a model. 
+\begin{enumerate}
+\item Fit HMMs to the data with \texttt{fitHMM}, including
+<<eval=F>>=
+# selecting starting values
+stepMean0 <- c(1,5)
+stepSD0 <- c(1,5)
+stepPar0 <- c(stepMean0,stepSD0)
+angleMean0 <- c(pi,0)
+angleCon0 <- c(2,1)
+anglePar0 <- c(angleMean0,angleCon0)
+@
+\begin{enumerate}
+\item no covariate; 
+<<eval=F, tidy=T>>=
+mnocov <- fitHMM(data, nbState=2, stepPar0=stepPar0, anglePar0=anglePar0)
+@
+\item the temperature as a covariate; 
+<<eval=F, tidy=T>>=
+mcov1 <- fitHMM(data, nbState=2, stepPar0=stepPar0, anglePar0=anglePar0, formula=~temp)
+@
+\item the temperature and wind as covariates (use argument \texttt{formula})
+<<eval=F, tidy=T>>=
+mcov2 <- fitHMM(data, nbState=2, stepPar0=stepPar0, 
+                anglePar0=anglePar0, formula=~temp+wind)
+@
+\end{enumerate}
+\item Use the AIC to compare the three fitted models. 
+<<eval=F>>=
+# compare the fitted models with AIC
+print(AIC(mnocov,mcov1,mcov2))
+@
+\end{enumerate}
+\end{enumerate}
+
+
+\end{document}
