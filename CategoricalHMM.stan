@@ -18,8 +18,6 @@ parameters {
 
   simplex[N] init;
   simplex[N] tpm[N]; // N x N tpm
-  ordered[N] mu; // state-dependent parameters
-
 }  
 
 model {
