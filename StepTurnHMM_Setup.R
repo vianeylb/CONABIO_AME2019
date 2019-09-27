@@ -8,9 +8,9 @@ options(mc.cores = parallel::detectCores())
 
 rawhaggis <- read_csv("haggis.csv")
 # derive step lengths and turning angles from locations
-data <- prepData(rawhaggis, type="UTM")
-# data <- prepData(data.frame(rawhaggis), type="UTM")
-# plot(data)
+#data <- moveHMM::prepData(rawhaggis, type="UTM")
+ data <- prepData(data.frame(rawhaggis), type="UTM")
+ plot(data)
 #data <- as_tibble(prepData(data.frame(rawhaggis), type="UTM"))
 #plot(data)
 

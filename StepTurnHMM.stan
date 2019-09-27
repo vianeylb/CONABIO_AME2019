@@ -93,8 +93,11 @@ model {
         
         for (n in 1:N) {
             logptemp[n] = log_sum_exp(to_vector(log_gamma_tr[t,n]) + logp);
+            
+            //to account for missing values
             if(steps[t]>=0)
-                logptemp[n] = logptemp[n] + gamma_lpdf(steps[t] | shape[n], rate[n]);
+                logptemp[n] = logptemp[n] + gamma_lpdf(steps[t] | shape[n], rate[n]);           
+            //to account for missing values    
             if(angles[t]>=(-pi()))
                 logptemp[n] = logptemp[n] + von_mises_lpdf(angles[t] | loc[n], kappa[n]);    
         }
