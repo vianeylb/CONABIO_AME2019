@@ -1,0 +1,89 @@
+---
+title: "Simulating Data from a hidden Markov model"
+output: html_document
+---
+
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+```
+
+## The four components that make up an HMM: 
+
+- the number of states $N$
+- the initial distribution
+- the transition probability matrix
+- the state-dependent distributions
+
+
+
+```{r simdata}
+
+## ---------------------------------------
+## N - number of states
+## init - initial distribution
+## tpm - transition probability matrix
+## ---------------------------------------
+
+
+N <- 3
+init <- rep(1/N, N)
+
+tpm <- matrix(c(0.99, 0.005, 0.005, ## row corresponds to state 1
+                0.02, 0.9, 0.08, ## row corresponds to state 2
+                0.1, 0.1, 0.8), ## row corresponds to state 3
+              byrow=T, nrow=3, ncol=3)
+
+## ---------------------------------------
+## normal state-dependent distributions
+## ---------------------------------------
+
+## means and standard deviations for each state
+
+len <- 1000
+mu <- c(0, 5, 10)
+sd <- c(1, 1, 1)
+
+states <- numeric(len)
+obs <- numeric(len)
+
+## sample function 
+states[1] <- sample(size=1, x = 1:N, prob = init)
+
+
+for(j in 2:len){
+  states[j] <- sample(size=1, x = 1:N, prob = tpm[states[j-1],])
+}
+
+obs <- rnorm(len, mean=mu[states], sd = sd[states])
+
+```
+
+## Including Plots
+
+```{r plots}
+
+valsdf <- data.frame(ind=1:len, obs=obs, states=states)
+
+## plotting the state sequence
+valsdf%>%ggplot(aes(ind, states)) + geom_path() + theme_light()
+
+## plotting the observations over time
+valsdf%>%ggplot(aes(ind, obs)) + geom_path() + theme_light()
+
+## plotting the observations over time
+valsdf[1:200,]%>%ggplot(aes(ind, obs)) + geom_path(aes(color=states)) + theme_light()
+
+## plotting the observations over time
+valsdf%>%ggplot(aes(ind, obs)) + geom_point(aes(color=states), size=2) + theme_light()
+
+## plotting the histogram of the observations 
+valsdf%>%ggplot(aes(obs)) + geom_histogram(bins=40, fill="white", color="black") + theme_light()
+
+```
+
+```{r acf}
+acf(obs)
+
+```
