@@ -5,8 +5,9 @@ data {
   int<lower=0> N; // number of states
   int<lower=1> T; // length of data set
   int<lower=1> y[T]; // observations
-  int<lower=1> cats;
+  int<lower=1> cats; //number of categories
 
+  //prior dist values for theta
   vector[cats] as[N];
 
 }
@@ -14,6 +15,7 @@ data {
 
 parameters {
 
+  // theta = N x (cats)
   simplex[cats] theta[N];
 
   simplex[N] init;
@@ -27,7 +29,6 @@ model {
   vector[N] lp_p1;
   
   // prior for theta
-  
   theta[1] ~ dirichlet(as[1]);
   theta[2] ~ dirichlet(as[2]);
   

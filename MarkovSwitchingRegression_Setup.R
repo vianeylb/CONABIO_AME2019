@@ -65,9 +65,8 @@ ggplot(data=tibble(x=1:len, obs, group=factor(states)),
 
 
 ## Fitting the model 
-
 stan.data.regression <- list(TT = len, y = obs, N=2, ncovs=1, xmat = cbind(1, xobs))
-fit.regression <- stan("MarkovSwitchingRegression.stan", data=stan.data.splines, chains = 3)
+fit.regression <- stan("MarkovSwitchingRegression.stan", data=stan.data.regression, chains = 3)
 
 
 

@@ -3,7 +3,7 @@
 ## Setup for a basic HMM
 library(tidyverse)
 library(rstan)
-library(MCMCpack)
+#library(MCMCpack)
 rstan_options(auto_write = TRUE)
 options(mc.cores = parallel::detectCores())
 
@@ -58,10 +58,11 @@ ggplot(stateDur, aes(x, dur, color=group)) +
 
 ## Fitting the model
 
+## prior distributions for theta
 as <- matrix(c(1, 1, 5, 
                100, 1, 1), 
              nrow=2, byrow=T)
 
 stan.data.cathmm <- list(N = N, y=obs, T=len, cats=3, as=as)
-fit.cathmm <- stan(file="CategoricalHMM.stan", data=stan.data.cathmm, chains=3)
+fit.cathmm <- stan(file="CategoricalHMM.stan", data=stan.data.cathmm, chains=1)
 

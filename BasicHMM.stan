@@ -10,9 +10,11 @@ parameters {
   simplex[N] tpm[N]; // N x N tpm
   ordered[N] mu; // state-dependent parameters
   vector<lower=0>[N] sigma;
+  
+  simplex[N] init;
 }  
 
-transformed parameters{
+/*transformed parameters{
   
   matrix[N, N] ta; // 
   simplex[N] statdist; // stationary distribution
@@ -25,11 +27,16 @@ transformed parameters{
   
   statdist =  to_vector((to_row_vector(rep_vector(1.0, N))/
       (diag_matrix(rep_vector(1.0, N)) - ta + rep_matrix(1, N, N)))) ;
-}
+}*/
+
+
 
 model {
 
+  //log of the transposed tpm
   vector[N] log_tpm_tr[N];
+  
+  //forward variables
   vector[N] lp;
   vector[N] lp_p1;
   
@@ -46,9 +53,12 @@ model {
 
   
   // forward algorithm implementation
+  
+  //alpha_1
   for(n in 1:N) // first observation
-    lp[n] = log(statdist[n]) + normal_lpdf(y[1] | mu[n], sigma[n]);
+    lp[n] = log(init[n]) + normal_lpdf(y[1] | mu[n], sigma[n]);
 
+  //alpha_t
   for (t in 2:T) { // looping over observations
     for (n in 1:N) // looping over states
       lp_p1[n] = log_sum_exp(log_tpm_tr[n] + lp) + 

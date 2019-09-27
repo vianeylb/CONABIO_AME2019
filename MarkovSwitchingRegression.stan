@@ -47,7 +47,7 @@ model {
   
   //forward algorithm  
   for(n in 1:N){
-    lp[n] = log(init[n]) + normal_lpdf(y[1]| beta[n].*xmat[1], sigma[n]);
+    lp[n] = log(init[n]) + normal_lpdf(y[1]| sum(beta[n].*xmat[1]), sigma[n]);
   }
   
   for(t in 2:TT){

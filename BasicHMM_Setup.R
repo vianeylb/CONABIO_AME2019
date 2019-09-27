@@ -1,6 +1,7 @@
 ## Setup for a basic HMM
 library(tidyverse)
 library(rstan)
+
 rstan_options(auto_write = TRUE)
 options(mc.cores = parallel::detectCores())
 
@@ -55,5 +56,16 @@ ggplot(stateDur, aes(x, dur, color=group)) +
 ## Fitting the model
 
 stan.data.bhmm <- list(N = N, y=obs, T=len)
-fit.bhmm <- stan(file="BasicHMM.stan", data=stan.data.bhmm)
+fit.bhmm <- stan(file="BasicHMM.stan", data=stan.data.bhmm, chains=3, 
+                 iter=2000, warmup = 1000)
+
+plot(fit.bhmm, pars=c("mu"), plotfun="hist")
+plot(fit.bhmm, pars=c("sigma"), plotfun="hist")
+plot(fit.bhmm, pars=c("tpm"), plotfun="hist")
+
+#install.packages("shinystan")
+#library(shinystan)
+#launch_shinystan(fit.bhmm)
+
+
 
